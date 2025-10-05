@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Default environment variables
+FIREFOX_HOME=${FIREFOX_HOME:-about:blank}
+FIREFOX_KIOSK=${FIREFOX_KIOSK:-true}
 
 # Create the user account if it doesn't exist
 if ! id ubuntu >/dev/null 2>&1; then
