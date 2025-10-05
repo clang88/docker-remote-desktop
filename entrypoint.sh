@@ -4,12 +4,10 @@
 FIREFOX_HOME=${FIREFOX_HOME:-about:blank}
 FIREFOX_KIOSK=${FIREFOX_KIOSK:-true}
 FIREFOX_AUTOSTART=${FIREFOX_AUTOSTART:-true}
-
-# Create the user account if it doesn't exist
-if ! id ubuntu >/dev/null 2>&1; then
-    groupadd --gid 1000 ubuntu
-    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups sudo --password "$(openssl passwd ${UBUNTU_PASSWORD:-ubuntu})" --create-home --home-dir /home/ubuntu ubuntu
-fi
+KIOSK_LOCKDOWN=${KIOSK_LOCKDOWN:-false}
+echo "FIREFOX_AUTOSTART=$FIREFOX_AUTOSTART" >> /etc/environment \
+&& echo "FIREFOX_KIOSK=$FIREFOX_KIOSK" >> /etc/environment \
+&& echo "FIREFOX_HOME=$FIREFOX_HOME" >> /etc/environment
 
 # Set the ubuntu user's password from UBUNTU_PASSWORD env variable if user exists
 if id ubuntu >/dev/null 2>&1; then
