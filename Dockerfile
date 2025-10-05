@@ -30,8 +30,7 @@ RUN scripts/install_pulseaudio_sources_apt.sh && \
 # Core environment
 ENV FIREFOX_AUTOSTART=true \
     FIREFOX_KIOSK=true \
-    FIREFOX_HOME=about:blank \
-    KIOSK_LOCKDOWN=false
+    FIREFOX_HOME=about:blank
 
 FROM ubuntu:$TAG
 
@@ -40,7 +39,6 @@ RUN apt-get update && \
         dbus-x11 \
         git \
         locales \
-        openbox \
         pavucontrol \
         pulseaudio \
         pulseaudio-utils \
@@ -62,32 +60,21 @@ RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends firefox && \
     rm -rf /var/lib/apt/lists/*
 
-# Remove existing "ubuntu" users and create ubuntu user and group with UID/GID 1000 and home directory
+# Remove existing "ubuntu" users and create ubuntu user and group with UID/GID 1000 and home directory, adding user to video group
 RUN deluser --remove-home ubuntu || true && \
     delgroup ubuntu || true && \
     groupadd -f -g 1000 ubuntu && \
-    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups sudo --create-home --home-dir /home/ubuntu ubuntu && \
+    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups video --create-home --home-dir /home/ubuntu ubuntu && \
     locale-gen en_US.UTF-8
 
 COPY --from=builder /tmp/install /
 RUN sed -i 's|^Exec=.*|Exec=/usr/bin/pulseaudio|' /etc/xdg/autostart/pulseaudio-xrdp.desktop
 
 ENV LANG=en_US.UTF-8
-# Ensure Firefox env vars are available to all login sessions (for xrdp/GUI)
-RUN echo 'FIREFOX_AUTOSTART=true' >> /etc/environment \
-    && echo 'FIREFOX_KIOSK=true' >> /etc/environment \
-    && echo 'FIREFOX_HOME=about:blank' >> /etc/environment \
-    && echo 'KIOSK_LOCKDOWN=false' >> /etc/environment
 COPY .xsession /home/ubuntu/.xsession
 RUN chown ubuntu:ubuntu /home/ubuntu/.xsession && chmod 755 /home/ubuntu/.xsession
 # Symlinking to xsessionrc because apparently not all xrdp use .xsession directly
 RUN ln -sf /home/ubuntu/.xsession /home/ubuntu/.xsessionrc && chown ubuntu:ubuntu /home/ubuntu/.xsessionrc
-# Setup kiosk mode configuration
-RUN mkdir -p /home/ubuntu/.config/openbox
-COPY kiosk-rc.xml /home/ubuntu/.config/openbox/kiosk-rc.xml
-COPY kiosk-prefs.js /home/ubuntu/kiosk-prefs.js
-RUN chown -R ubuntu:ubuntu /home/ubuntu/.config
-
 COPY entrypoint.sh /usr/bin/entrypoint
 EXPOSE 3389/tcp
 ENTRYPOINT ["/usr/bin/entrypoint"]

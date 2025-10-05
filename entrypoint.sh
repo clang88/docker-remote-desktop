@@ -4,11 +4,9 @@
 FIREFOX_HOME=${FIREFOX_HOME:-about:blank}
 FIREFOX_KIOSK=${FIREFOX_KIOSK:-true}
 FIREFOX_AUTOSTART=${FIREFOX_AUTOSTART:-true}
-KIOSK_LOCKDOWN=${KIOSK_LOCKDOWN:-false}
 echo "FIREFOX_AUTOSTART=$FIREFOX_AUTOSTART" >> /etc/environment \
 && echo "FIREFOX_KIOSK=$FIREFOX_KIOSK" >> /etc/environment \
 && echo "FIREFOX_HOME=$FIREFOX_HOME" >> /etc/environment
-
 # Set the ubuntu user's password from UBUNTU_PASSWORD env variable if user exists
 if id ubuntu >/dev/null 2>&1; then
     echo "ubuntu:${UBUNTU_PASSWORD:-ubuntu}" | chpasswd
