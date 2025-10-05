@@ -42,6 +42,7 @@ RUN apt-get update && \
         locales \
         openbox \
         pavucontrol \
+        libpci-dev \
         pulseaudio \
         pulseaudio-utils \
         software-properties-common \
@@ -67,7 +68,7 @@ RUN apt-get update && \
 RUN deluser --remove-home ubuntu || true && \
     delgroup ubuntu || true && \
     groupadd -f -g 1000 ubuntu && \
-    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups video --create-home --home-dir /home/ubuntu ubuntu && \
+    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups sudo,render,video --create-home --home-dir /home/ubuntu ubuntu && \
     locale-gen en_US.UTF-8
 
 COPY --from=builder /tmp/install /
