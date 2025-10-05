@@ -6,4 +6,7 @@ docker run -it \
     --publish="3389:3389/tcp" \
     --name="remote-desktop" \
     --shm-size="1g" \
+    --env "FIREFOX_HOME=https://google.com" \
+    --env "FIREFOX_KIOSK=true" \
+    --env "FIREFOX_AUTOSTART=true" \
     docker-remote-desktop:latest /bin/bash

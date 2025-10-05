@@ -3,11 +3,12 @@
 # Default environment variables
 FIREFOX_HOME=${FIREFOX_HOME:-about:blank}
 FIREFOX_KIOSK=${FIREFOX_KIOSK:-true}
+FIREFOX_AUTOSTART=${FIREFOX_AUTOSTART:-true}
 
 # Create the user account if it doesn't exist
 if ! id ubuntu >/dev/null 2>&1; then
-    groupadd --gid 1020 ubuntu
-    useradd --shell /bin/bash --uid 1020 --gid 1020 --groups sudo --password "$(openssl passwd ${UBUNTU_PASSWORD:-ubuntu})" --create-home --home-dir /home/ubuntu ubuntu
+    groupadd --gid 1000 ubuntu
+    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups sudo --password "$(openssl passwd ${UBUNTU_PASSWORD:-ubuntu})" --create-home --home-dir /home/ubuntu ubuntu
 fi
 
 # Set the ubuntu user's password from UBUNTU_PASSWORD env variable if user exists
@@ -21,6 +22,8 @@ fi
 
 # Start xrdp sesman service
 /usr/sbin/xrdp-sesman
+
+## Firefox autostart removed from here. It should be started in the user's xrdp session profile (e.g., .xsession or .bash_profile).
 
 # Run xrdp in foreground if no commands specified
 if [ -z "$1" ]; then

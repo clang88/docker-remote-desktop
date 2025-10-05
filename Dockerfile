@@ -27,6 +27,11 @@ RUN scripts/install_pulseaudio_sources_apt.sh && \
 
 
 # Build the final image
+# Core environment
+ENV FIREFOX_AUTOSTART=true \
+    FIREFOX_KIOSK=true \
+    FIREFOX_HOME=about:blank
+
 FROM ubuntu:$TAG
 
 RUN apt-get update && \
@@ -53,14 +58,30 @@ RUN apt-get update && \
     echo "Pin-Priority: 1001" >> /etc/apt/preferences.d/mozilla-firefox && \
     apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends firefox && \
-    rm -rf /var/lib/apt/lists/* && \
-    deluser --remove-home ubuntu && \
+    rm -rf /var/lib/apt/lists/*
+
+# Remove existing "ubuntu" users and create ubuntu user and group with UID/GID 1000 and home directory
+RUN deluser --remove-home ubuntu || true && \
+    delgroup ubuntu || true && \
+    groupadd -f -g 1000 ubuntu && \
+    useradd --shell /bin/bash --uid 1000 --gid 1000 --groups sudo --create-home --home-dir /home/ubuntu ubuntu && \
     locale-gen en_US.UTF-8
 
 COPY --from=builder /tmp/install /
 RUN sed -i 's|^Exec=.*|Exec=/usr/bin/pulseaudio|' /etc/xdg/autostart/pulseaudio-xrdp.desktop
 
 ENV LANG=en_US.UTF-8
+# Ensure Firefox env vars are available to all login sessions (for xrdp/GUI)
+RUN echo 'FIREFOX_AUTOSTART=true' >> /etc/environment \
+    && echo 'FIREFOX_KIOSK=true' >> /etc/environment \
+    && echo 'FIREFOX_HOME=about:blank' >> /etc/environment
+COPY .xsession /home/ubuntu/.xsession
+RUN chown ubuntu:ubuntu /home/ubuntu/.xsession && chmod 755 /home/ubuntu/.xsession
+RUN ln -sf /home/ubuntu/.xsession /home/ubuntu/.xsessionrc && chown ubuntu:ubuntu /home/ubuntu/.xsessionrc
+# Setup Firefox autostart via desktop file
+#RUN mkdir -p /home/ubuntu/.config/autostart
+#COPY firefox-autostart.desktop /home/ubuntu/.config/autostart/
+#RUN chown -R ubuntu:ubuntu /home/ubuntu/.config
 COPY entrypoint.sh /usr/bin/entrypoint
 EXPOSE 3389/tcp
 ENTRYPOINT ["/usr/bin/entrypoint"]
