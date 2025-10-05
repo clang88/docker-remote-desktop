@@ -9,4 +9,5 @@ docker run -it \
     --env "FIREFOX_HOME=https://google.com" \
     --env "FIREFOX_KIOSK=true" \
     --env "FIREFOX_AUTOSTART=true" \
+    --env "KIOSK_LOCKDOWN=true" \
     docker-remote-desktop:latest /bin/bash
