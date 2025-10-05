@@ -4,16 +4,23 @@
 [ -f /etc/environment ] && . /etc/environment
 
 echo "[.xsession] Running as $(whoami) at $(date)" > /tmp/xsession-debug.log
-echo "[.xsession] Firefox environment variables:" >> /tmp/xsession-debug.log
+echo "[.xsession] Environment variables:" >> /tmp/xsession-debug.log
 echo "FIREFOX_AUTOSTART=$FIREFOX_AUTOSTART" >> /tmp/xsession-debug.log
 echo "FIREFOX_KIOSK=$FIREFOX_KIOSK" >> /tmp/xsession-debug.log
 echo "FIREFOX_HOME=$FIREFOX_HOME" >> /tmp/xsession-debug.log
+echo "KIOSK_LOCKDOWN=$KIOSK_LOCKDOWN" >> /tmp/xsession-debug.log
 env >> /tmp/xsession-debug.log
 
 # Export environment variables for the session
-export FIREFOX_AUTOSTART FIREFOX_KIOSK FIREFOX_HOME
+export FIREFOX_AUTOSTART FIREFOX_KIOSK FIREFOX_HOME KIOSK_LOCKDOWN
 
-# Start the default X session (e.g., xfce4-session, startxfce4, or similar)
+# Check if KIOSK_LOCKDOWN is enabled - if so, launch Firefox-only session
+if [ "$KIOSK_LOCKDOWN" = "true" ]; then
+    echo "[.xsession] KIOSK_LOCKDOWN enabled, launching Firefox-only session" >> /tmp/xsession-debug.log
+    exec /home/ubuntu/.firefox-kiosk-session
+fi
+
+# Regular desktop mode - Start the default X session (e.g., xfce4-session, startxfce4, or similar)
 if command -v startxfce4 >/dev/null 2>&1; then
     # Start Firefox in background after a short delay if autostart is enabled
     if [ "$FIREFOX_AUTOSTART" = "true" ]; then

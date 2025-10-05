@@ -30,7 +30,8 @@ RUN scripts/install_pulseaudio_sources_apt.sh && \
 # Core environment
 ENV FIREFOX_AUTOSTART=true \
     FIREFOX_KIOSK=true \
-    FIREFOX_HOME=about:blank
+    FIREFOX_HOME=about:blank \
+    KIOSK_LOCKDOWN=false
 
 FROM ubuntu:$TAG
 
@@ -39,11 +40,13 @@ RUN apt-get update && \
         dbus-x11 \
         git \
         locales \
+        openbox \
         pavucontrol \
         pulseaudio \
         pulseaudio-utils \
         software-properties-common \
         sudo \
+        unclutter \
         vim \
         x11-xserver-utils \
         xfce4 \
@@ -72,7 +75,9 @@ RUN sed -i 's|^Exec=.*|Exec=/usr/bin/pulseaudio|' /etc/xdg/autostart/pulseaudio-
 
 ENV LANG=en_US.UTF-8
 COPY .xsession /home/ubuntu/.xsession
-RUN chown ubuntu:ubuntu /home/ubuntu/.xsession && chmod 755 /home/ubuntu/.xsession
+COPY .firefox-kiosk-session /home/ubuntu/.firefox-kiosk-session
+RUN chown ubuntu:ubuntu /home/ubuntu/.xsession && chmod 755 /home/ubuntu/.xsession && \
+    chown ubuntu:ubuntu /home/ubuntu/.firefox-kiosk-session && chmod 755 /home/ubuntu/.firefox-kiosk-session
 # Symlinking to xsessionrc because apparently not all xrdp use .xsession directly
 RUN ln -sf /home/ubuntu/.xsession /home/ubuntu/.xsessionrc && chown ubuntu:ubuntu /home/ubuntu/.xsessionrc
 COPY entrypoint.sh /usr/bin/entrypoint
