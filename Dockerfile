@@ -61,6 +61,8 @@ COPY --from=builder /tmp/install /
 RUN sed -i 's|^Exec=.*|Exec=/usr/bin/pulseaudio|' /etc/xdg/autostart/pulseaudio-xrdp.desktop
 
 ENV LANG=en_US.UTF-8
+# Set the default password for ubuntu user at runtime with UBUNTU_PASSWORD (default: ubuntu)
+ENV UBUNTU_PASSWORD=ubuntu
 COPY entrypoint.sh /usr/bin/entrypoint
 EXPOSE 3389/tcp
 ENTRYPOINT ["/usr/bin/entrypoint"]

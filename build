@@ -1,3 +1,31 @@
 #!/usr/bin/env bash
 
-docker build "$@" -t docker-remote-desktop .
+# Use docker build by default, or buildx for multiplatform if --multiplat is passed anywhere
+args=()
+multiplat=false
+has_tag=false
+next_is_tag=false
+for arg in "$@"; do
+	if [[ "$arg" == "--multiplat" ]]; then
+		multiplat=true
+	elif [[ "$arg" == "-t" || "$arg" == "--tag" ]]; then
+		has_tag=true
+		args+=("$arg")
+		next_is_tag=true
+	elif $next_is_tag; then
+		args+=("$arg")
+		next_is_tag=false
+	else
+		args+=("$arg")
+	fi
+done
+
+if ! $has_tag; then
+	args+=("-t" "docker-remote-desktop")
+fi
+
+if $multiplat; then
+	docker buildx build --platform linux/amd64,linux/arm64 "${args[@]}" .
+else
+	docker build "${args[@]}" .
+fi
