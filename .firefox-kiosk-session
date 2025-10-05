@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Minimal Firefox-only session script for KIOSK mode
+# This bypasses all desktop environments and runs only Firefox
+
+echo "[.firefox-kiosk-session] Starting Firefox-only session at $(date)" > /tmp/firefox-kiosk-debug.log
+echo "[.firefox-kiosk-session] Running as $(whoami)" >> /tmp/firefox-kiosk-debug.log
+echo "[.firefox-kiosk-session] Firefox environment variables:" >> /tmp/firefox-kiosk-debug.log
+echo "FIREFOX_HOME=$FIREFOX_HOME" >> /tmp/firefox-kiosk-debug.log
+echo "FIREFOX_KIOSK=$FIREFOX_KIOSK" >> /tmp/firefox-kiosk-debug.log
+echo "KIOSK_LOCKDOWN=$KIOSK_LOCKDOWN" >> /tmp/firefox-kiosk-debug.log
+
+# Set up minimal environment
+export DISPLAY=${DISPLAY:-:10.0}
+
+# Disable screen saver and power management
+xset s off
+xset -dpms
+xset s noblank
+
+# Hide cursor after 1 second of inactivity
+unclutter -idle 1 -root &
+
+# Start a minimal window manager (openbox) with no decorations
+# Configure openbox to have no panels, no desktop, no menus
+mkdir -p ~/.config/openbox
+cat > ~/.config/openbox/rc.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_config xmlns="http://openbox.org/" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <resistance>
+    <strength>10</strength>
+    <screen_edge_strength>20</screen_edge_strength>
+  </resistance>
+  <focus>
+    <focusNew>yes</focusNew>
+    <followMouse>no</followMouse>
+    <focusLast>yes</focusLast>
+    <underMouse>no</underMouse>
+    <focusDelay>200</focusDelay>
+    <raiseOnFocus>no</raiseOnFocus>
+  </focus>
+  <placement>
+    <policy>Smart</policy>
+    <center>yes</center>
+    <monitor>Primary</monitor>
+    <primaryMonitor>1</primaryMonitor>
+  </placement>
+  <theme>
+    <name>Clearlooks</name>
+    <titleLayout>NLIMC</titleLayout>
+    <keepBorder>yes</keepBorder>
+    <animateIconify>yes</animateIconify>
+    <font place="ActiveWindow">
+      <name>sans</name>
+      <size>8</size>
+      <weight>bold</weight>
+      <slant>normal</slant>
+    </font>
+    <font place="InactiveWindow">
+      <name>sans</name>
+      <size>8</size>
+      <weight>bold</weight>
+      <slant>normal</slant>
+    </font>
+  </theme>
+  <desktops>
+    <number>1</number>
+    <firstdesk>1</firstdesk>
+  </desktops>
+  <applications>
+    <application name="firefox*">
+      <decor>no</decor>
+      <maximized>true</maximized>
+      <focus>yes</focus>
+    </application>
+  </applications>
+</openbox_config>
+EOF
+
+# Start openbox in background
+openbox-session &
+WM_PID=$!
+
+# Wait a moment for window manager to start
+sleep 2
+
+# Start Firefox in kiosk mode
+echo "[.firefox-kiosk-session] Starting Firefox with FIREFOX_HOME=$FIREFOX_HOME" >> /tmp/firefox-kiosk-debug.log
+if [ "$FIREFOX_KIOSK" = "true" ]; then
+    firefox --kiosk --no-remote --disable-restore-session-state "$FIREFOX_HOME" >> /tmp/firefox-debug.log 2>&1 &
+else
+    firefox --no-remote --disable-restore-session-state "$FIREFOX_HOME" >> /tmp/firefox-debug.log 2>&1 &
+fi
+
+FIREFOX_PID=$!
+
+# Monitor Firefox process and restart if it exits
+while true; do
+    if ! kill -0 $FIREFOX_PID 2>/dev/null; then
+        echo "[.firefox-kiosk-session] Firefox process died, restarting..." >> /tmp/firefox-kiosk-debug.log
+        sleep 2
+        if [ "$FIREFOX_KIOSK" = "true" ]; then
+            firefox --kiosk --no-remote --disable-restore-session-state "$FIREFOX_HOME" >> /tmp/firefox-debug.log 2>&1 &
+        else
+            firefox --no-remote --disable-restore-session-state "$FIREFOX_HOME" >> /tmp/firefox-debug.log 2>&1 &
+        fi
+        FIREFOX_PID=$!
+    fi
+    sleep 5
+done

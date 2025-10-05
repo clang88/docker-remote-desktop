@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Run the container in regular desktop mode with Firefox autostart
+docker run -it \
+    --rm \
+    --hostname="$(hostname)" \
+    --publish="3389:3389/tcp" \
+    --name="remote-desktop" \
+    --shm-size="1g" \
+    --env "FIREFOX_HOME=https://google.com" \
+    --env "FIREFOX_KIOSK=true" \
+    --env "FIREFOX_AUTOSTART=true" \
+    --env "KIOSK_LOCKDOWN=false" \
+    docker-remote-desktop:latest
