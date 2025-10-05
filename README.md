@@ -254,3 +254,86 @@ docker run -it \
     --env "FIREFOX_HOME=file:///home/ubuntu/data/index.html" \
     docker-remote-desktop:latest
 ```
+
+## Persisting User Settings
+
+To maintain user settings, bookmarks, and other application data across container restarts, you can mount host directories to preserve important user configuration folders. This is particularly useful for maintaining Firefox profiles, desktop settings, and other personalized configurations.
+
+### Key Directories to Persist
+
+- **Firefox Profile**: `~/.mozilla/firefox` - Contains bookmarks, extensions, preferences, and browsing history
+- **Desktop Settings**: `~/.config/xfce4` - XFCE desktop environment settings and customizations
+- **User Home**: `/home/ubuntu` - Complete user directory (includes all settings)
+
+### Docker Compose with Persistent Settings
+
+**Desktop Mode with Settings Persistence:**
+```yaml
+version: '3.8'
+services:
+  remote-desktop:
+    image: docker-remote-desktop:latest
+    container_name: remote-desktop
+    hostname: remote-desktop
+    ports:
+      - "3389:3389"
+    shm_size: 1g
+    environment:
+      - FIREFOX_HOME=https://your-website.com
+      - FIREFOX_KIOSK=true
+      - FIREFOX_AUTOSTART=true
+      - KIOSK_LOCKDOWN=false
+      - UBUNTU_PASSWORD=your-secure-password
+    volumes:
+      # Persist Firefox profile (bookmarks, extensions, settings)
+      - ./firefox-data:/home/ubuntu/.mozilla/firefox
+      # Persist desktop settings
+      - ./xfce-config:/home/ubuntu/.config/xfce4
+      # Optional: persist entire user directory
+      # - ./user-home:/home/ubuntu
+    restart: unless-stopped
+```
+
+**Kiosk Mode with Firefox Settings Persistence:**
+```yaml
+version: '3.8'
+services:
+  remote-desktop-kiosk:
+    image: docker-remote-desktop:latest
+    container_name: remote-desktop-kiosk
+    hostname: kiosk
+    ports:
+      - "3389:3389"
+    shm_size: 1g
+    environment:
+      - FIREFOX_HOME=https://your-kiosk-app.com
+      - FIREFOX_KIOSK=true
+      - KIOSK_LOCKDOWN=true
+      - UBUNTU_PASSWORD=your-secure-password
+    volumes:
+      # Persist Firefox profile for consistent kiosk behavior
+      - ./firefox-data:/home/ubuntu/.mozilla/firefox
+    restart: unless-stopped
+```
+
+### Manual Docker Run with Bind Mounts
+
+```bash
+# Create directories on host
+mkdir -p ./firefox-data ./xfce-config
+
+# Run with persistent settings
+docker run -it \
+    --rm \
+    --hostname="$(hostname)" \
+    --publish="3389:3389/tcp" \
+    --name="remote-desktop" \
+    --shm-size="1g" \
+    --volume="$(pwd)/firefox-data:/home/ubuntu/.mozilla/firefox" \
+    --volume="$(pwd)/xfce-config:/home/ubuntu/.config/xfce4" \
+    --env "FIREFOX_HOME=https://your-website.com" \
+    --env "KIOSK_LOCKDOWN=false" \
+    docker-remote-desktop:latest
+```
+
+**Note**: The first time you run with these bind mounts, the directories will be empty and Firefox will create a new profile. Any changes you make (bookmarks, extensions, settings) will persist between container restarts.

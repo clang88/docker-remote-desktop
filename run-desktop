@@ -8,7 +8,7 @@ docker run -it \
     --name="remote-desktop" \
     --shm-size="1g" \
     --env "FIREFOX_HOME=https://google.com" \
-    --env "FIREFOX_KIOSK=true" \
+    --env "FIREFOX_KIOSK=false" \
     --env "FIREFOX_AUTOSTART=true" \
     --env "KIOSK_LOCKDOWN=false" \
     docker-remote-desktop:latest
