@@ -8,8 +8,6 @@
 
 Docker image with RDP server using [xrdp](https://www.xrdp.org) on Ubuntu with [Xfce](https://xfce.org).
 
-Images are built weekly using Ubuntu 24.04 (noble).
-
 ## Features
 
 - **Regular Desktop Mode**: Full XFCE desktop environment with Firefox integration
